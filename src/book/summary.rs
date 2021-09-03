@@ -5,7 +5,7 @@ use std::fmt::{self, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
-
+use urlencoding::decode;
 /// Parse the text from a `SUMMARY.md` file into a sort of "recipe" to be
 /// used when loading a book from disk.
 ///
@@ -333,14 +333,17 @@ impl<'a> SummaryParser<'a> {
 
     /// Finishes parsing a link once the `Event::Start(Tag::Link(..))` has been opened.
     fn parse_link(&mut self, href: String) -> Link {
-        let href = href.replace("%20", " ");
+        let url = match decode(&href) {
+            Ok(url) => url.into_owned(),
+            Err(_) => String::from(""),
+        };
         let link_content = collect_events!(self.stream, end Tag::Link(..));
         let name = stringify_events(link_content);
 
-        let path = if href.is_empty() {
+        let path = if url.is_empty() {
             None
         } else {
-            Some(PathBuf::from(href))
+            Some(PathBuf::from(url))
         };
 
         Link {

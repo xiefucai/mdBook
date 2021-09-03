@@ -6,7 +6,7 @@ use crate::utils;
 
 use handlebars::{Context, Handlebars, Helper, HelperDef, Output, RenderContext, RenderError};
 use pulldown_cmark::{html, Event, Parser};
-
+use urlencoding::encode;
 // Handlebars helper to construct TOC
 #[derive(Clone, Copy)]
 pub struct RenderToc {
@@ -114,8 +114,10 @@ impl HelperDef for RenderToc {
                     .and_then(|p| if p.is_empty() { None } else { Some(p) })
             {
                 out.write("<a href=\"")?;
+                let url = item.get("path").expect("Error: path should be Some(_)");
+                let encoded = encode(url).into_owned().replace("%2F", "/");
 
-                let tmp = Path::new(item.get("path").expect("Error: path should be Some(_)"))
+                let tmp = Path::new(&encoded)
                     .with_extension("html")
                     .to_str()
                     .unwrap()
